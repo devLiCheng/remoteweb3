@@ -13,7 +13,11 @@ const pool = mysql2.createPool({
 });
 
 export async function query<T>(sql: string, params?: unknown[]): Promise<T[]> {
-  const [rows] = await pool.execute(sql, params);
+  if (params && params.length > 0) {
+    const [rows] = await pool.query(sql, params);
+    return rows as T[];
+  }
+  const [rows] = await pool.query(sql);
   return rows as T[];
 }
 
@@ -23,7 +27,11 @@ export async function queryOne<T>(sql: string, params?: unknown[]): Promise<T | 
 }
 
 export async function execute(sql: string, params?: unknown[]): Promise<mysql2.ResultSetHeader> {
-  const [result] = await pool.execute(sql, params);
+  if (params && params.length > 0) {
+    const [result] = await pool.query(sql, params);
+    return result as mysql2.ResultSetHeader;
+  }
+  const [result] = await pool.query(sql);
   return result as mysql2.ResultSetHeader;
 }
 
