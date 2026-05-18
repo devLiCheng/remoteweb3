@@ -197,7 +197,7 @@ export default function JobDetailPage() {
   if (loading) {
     return (
       <div className="min-h-screen">
-        <div className="container mx-auto px-4 py-24 max-w-5xl">
+        <div className="w-full max-w-5xl mx-auto px-4 sm:px-6 py-24">
           <DetailSkeleton />
         </div>
       </div>
@@ -222,7 +222,7 @@ export default function JobDetailPage() {
 
   return (
     <div className="min-h-screen">
-      <div className="container mx-auto px-4 py-24 max-w-5xl">
+      <div className="w-full max-w-5xl mx-auto px-4 sm:px-6 py-24">
         <motion.button
           onClick={() => navigate(-1)}
           className="inline-flex items-center gap-2 text-text-muted hover:text-text transition-colors font-body text-sm mb-8"

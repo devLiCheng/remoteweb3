@@ -156,7 +156,7 @@ export default function CompaniesPage() {
         <div className="absolute inset-0 bg-gradient-to-b from-primary/10 via-transparent to-transparent" />
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[600px] bg-primary/5 rounded-full blur-3xl" />
 
-        <div className="relative z-10 container mx-auto px-4">
+        <div className="relative z-10 w-full max-w-7xl mx-auto px-4 sm:px-6">
           <motion.div
             className="text-center"
             initial={{ opacity: 0, y: -20 }}
@@ -194,7 +194,7 @@ export default function CompaniesPage() {
       </section>
 
       <section className="pb-20 lg:pb-28">
-        <div className="container mx-auto px-4">
+        <div className="w-full max-w-7xl mx-auto px-4 sm:px-6">
           {error ? (
             <div className="flex flex-col items-center justify-center py-16 text-text-muted gap-4">
               <div className="w-16 h-16 rounded-full bg-red-500/10 flex items-center justify-center">

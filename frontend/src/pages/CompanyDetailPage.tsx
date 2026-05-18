@@ -210,7 +210,7 @@ export default function CompanyDetailPage() {
   if (loading) {
     return (
       <div className="min-h-screen">
-        <div className="container mx-auto px-4 py-24 max-w-5xl">
+        <div className="w-full max-w-5xl mx-auto px-4 sm:px-6 py-24">
           <CompanyHeaderSkeleton />
           <div className="mt-12 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {Array.from({ length: 3 }).map((_, i) => (
@@ -228,7 +228,7 @@ export default function CompanyDetailPage() {
 
   return (
     <div className="min-h-screen">
-      <div className="container mx-auto px-4 py-24 max-w-5xl">
+      <div className="w-full max-w-5xl mx-auto px-4 sm:px-6 py-24">
         <motion.button
           onClick={() => navigate(-1)}
           className="inline-flex items-center gap-2 text-text-muted hover:text-text transition-colors font-body text-sm mb-8"

@@ -247,7 +247,7 @@ export default function HomePage() {
 
         <div className="absolute inset-0 bg-gradient-to-b from-bg/30 via-transparent to-bg z-[1]" />
 
-        <div className="relative z-10 container mx-auto px-4 flex flex-col items-center text-center max-w-5xl py-32">
+        <div className="relative z-10 w-full max-w-5xl mx-auto px-4 sm:px-6 flex flex-col items-center text-center py-32">
           <motion.div
             className="mb-6 inline-flex items-center gap-2 px-4 py-2 rounded-full border border-primary/30 bg-primary/5 text-primary-light text-sm font-medium"
             initial={{ opacity: 0, y: -20 }}
@@ -307,7 +307,7 @@ export default function HomePage() {
 
       {/* ==================== CATEGORIES SECTION ==================== */}
       <section className="py-20 lg:py-28 bg-gradient-to-b from-bg via-bg to-bg-card/20">
-        <div className="container mx-auto px-4 max-w-7xl">
+        <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 max-w-7xl">
           <motion.h2
             className="font-heading text-2xl sm:text-3xl lg:text-4xl font-bold text-center mb-4"
             variants={fadeInUp}
@@ -358,7 +358,7 @@ export default function HomePage() {
       {/* ==================== FEATURED JOBS SECTION ==================== */}
       <section className="py-20 lg:py-28 relative">
         <div className="absolute inset-0 bg-gradient-to-b from-bg-card/20 via-bg-card/10 to-transparent pointer-events-none" />
-        <div className="container mx-auto px-4 max-w-7xl relative">
+        <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 relative">
           <motion.div
             className="flex items-center justify-between mb-10"
             variants={fadeInUp}
@@ -416,7 +416,7 @@ export default function HomePage() {
       {/* ==================== LATEST JOBS SECTION ==================== */}
       <hr className="futuristic-divider" />
       <section className="py-20 lg:py-28">
-        <div className="container mx-auto px-4 max-w-7xl">
+        <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 max-w-7xl">
           <motion.div
             className="flex items-center gap-3 mb-10"
             variants={fadeInUp}
@@ -478,7 +478,7 @@ export default function HomePage() {
       {/* ==================== TOP COMPANIES SECTION ==================== */}
       <section className="py-20 lg:py-28 relative">
         <div className="absolute inset-0 bg-gradient-to-b from-transparent via-bg-card/10 to-bg-card/20 pointer-events-none" />
-        <div className="container mx-auto px-4 max-w-7xl relative">
+        <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 relative">
           <motion.div
             className="flex items-center justify-between mb-10"
             variants={fadeInUp}
@@ -563,7 +563,7 @@ export default function HomePage() {
         <div className="absolute inset-0 bg-gradient-to-br from-primary/30 via-primary-dark/20 to-bg opacity-95" />
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(6,182,212,0.15)_0%,transparent_70%)]" />
 
-        <div className="relative z-10 container mx-auto px-4 text-center max-w-7xl">
+        <div className="relative z-10 w-full max-w-7xl mx-auto px-4 sm:px-6 text-center max-w-7xl">
           <motion.h2
             className="font-heading text-3xl sm:text-4xl lg:text-5xl font-bold text-white"
             variants={fadeInUp}
