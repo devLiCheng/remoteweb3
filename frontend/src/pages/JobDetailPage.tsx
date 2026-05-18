@@ -207,9 +207,11 @@ export default function JobDetailPage() {
   if (!job) return null;
 
   const salaryText = formatSalary(job.salary_min, job.salary_max, job.salary_currency);
-  const tagList = job.tags
-    ? job.tags.split(',').map((tag) => tag.trim()).filter(Boolean)
-    : [];
+  const tagList: string[] = Array.isArray(job.tags)
+    ? job.tags.map((t: any) => typeof t === 'string' ? t : t.name || t.slug || String(t))
+    : typeof job.tags === 'string'
+      ? job.tags.split(',').map((tag: string) => tag.trim()).filter(Boolean)
+      : [];
   const logoFallback = job.company_name.charAt(0).toUpperCase();
   const requirementsList = job.requirements
     ? job.requirements
