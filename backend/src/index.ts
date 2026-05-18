@@ -8,6 +8,7 @@ import { companiesRouter } from './routes/companies';
 import { searchRouter } from './routes/search';
 import { tagsRouter } from './routes/tags';
 import { seoRouter } from './routes/seo';
+import { adminRouter } from './routes/admin';
 
 const app = new Hono();
 
@@ -30,6 +31,7 @@ app.route('/api/companies', companiesRouter);
 app.route('/api/search', searchRouter);
 app.route('/api/tags', tagsRouter);
 app.route('/api/seo', seoRouter);
+app.route('/api/admin', adminRouter);
 
 // 404
 app.notFound((c) => c.json({ error: 'Not found' }, 404));

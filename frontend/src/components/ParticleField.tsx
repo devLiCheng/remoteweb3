@@ -11,7 +11,7 @@ interface Dot {
   color: string
 }
 
-const COLORS = ['#8B5CF6', '#A78BFA', '#FBBF24', '#06B6D4']
+const COLORS = ['#06B6D4', '#22D3EE', '#F59E0B', '#00FFAA']
 
 function generateDots(count: number): Dot[] {
   return Array.from({ length: count }, (_, i) => ({
@@ -44,7 +44,7 @@ const ParticleField: FC = () => {
           position: 'absolute',
           inset: 0,
           background:
-            'radial-gradient(ellipse at 50% 50%, rgba(139,92,246,0.08) 0%, transparent 70%)',
+            'radial-gradient(ellipse at 50% 50%, rgba(6,182,212,0.08) 0%, transparent 70%)',
         }}
       />
 
@@ -53,8 +53,8 @@ const ParticleField: FC = () => {
           position: 'absolute',
           inset: 0,
           backgroundImage: `
-            linear-gradient(rgba(139,92,246,0.03) 1px, transparent 1px),
-            linear-gradient(90deg, rgba(139,92,246,0.03) 1px, transparent 1px)
+            linear-gradient(rgba(6,182,212,0.03) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(6,182,212,0.03) 1px, transparent 1px)
           `,
           backgroundSize: '60px 60px',
           opacity: 0.5,

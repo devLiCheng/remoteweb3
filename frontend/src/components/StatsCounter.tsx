@@ -58,7 +58,7 @@ function StatItem({ icon, target, suffix, label, isPercentage }: StatItemProps) 
         <span
           style={{
             textShadow:
-              '0 0 10px rgba(139, 92, 246, 0.3), 0 0 30px rgba(139, 92, 246, 0.15)',
+              '0 0 10px rgba(6, 182, 212, 0.3), 0 0 30px rgba(6, 182, 212, 0.15)',
           }}
         >
           {count.toLocaleString()}

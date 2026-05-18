@@ -72,7 +72,7 @@ if [ -d "./backend" ]; then
 else
     echo "Cloning from GitHub..."
     sudo rm -rf ${APP_DIR}/*
-    git clone https://github.com/YOUR_USERNAME/remoteweb3.git ${APP_DIR}
+    git clone https://github.com/devLiCheng/remoteweb3.git ${APP_DIR}
 fi
 
 sudo chown -R $USER:$USER ${APP_DIR}
@@ -208,7 +208,7 @@ sudo nginx -t && sudo systemctl reload nginx
 
 # SSL Certificate (Let's Encrypt)
 echo "Obtaining SSL certificate..."
-sudo certbot --nginx -d ${DOMAIN} -d www.${DOMAIN} --non-interactive --agree-tos --email admin@${DOMAIN} || echo "SSL: Run manually: sudo certbot --nginx"
+sudo certbot --nginx -d ${DOMAIN} -d www.${DOMAIN} --non-interactive --agree-tos --email 819812520@qq.com || echo "SSL: Run manually: sudo certbot --nginx"
 
 echo "[✓] Nginx configured."
 

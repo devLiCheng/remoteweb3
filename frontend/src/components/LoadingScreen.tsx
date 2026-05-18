@@ -24,7 +24,7 @@ export default function LoadingScreen() {
           className="font-heading text-4xl md:text-5xl font-bold tracking-wider text-text relative"
           style={{
             textShadow:
-              '0 0 10px rgba(139, 92, 246, 0.4), 0 0 40px rgba(139, 92, 246, 0.2), 0 0 80px rgba(139, 92, 246, 0.1)',
+              '0 0 10px rgba(6, 182, 212, 0.4), 0 0 40px rgba(6, 182, 212, 0.2), 0 0 80px rgba(6, 182, 212, 0.1)',
           }}
         >
           <motion.span
