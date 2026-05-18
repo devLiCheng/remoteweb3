@@ -208,8 +208,8 @@ export default function HomePage() {
     try {
       const res = await fetch('/api/jobs?limit=6&sort=posted_date');
       if (!res.ok) throw new Error('Failed to fetch jobs');
-      const data: Job[] = await res.json();
-      setJobs(data);
+      const json = await res.json();
+      setJobs(json.data || []);
     } catch (err) {
       setJobsError(err instanceof Error ? err.message : 'Failed to load jobs');
     } finally {
@@ -223,8 +223,8 @@ export default function HomePage() {
     try {
       const res = await fetch('/api/companies?limit=12');
       if (!res.ok) throw new Error('Failed to fetch companies');
-      const data: Company[] = await res.json();
-      setCompanies(data);
+      const json = await res.json();
+      setCompanies(json.data || []);
     } catch (err) {
       setCompaniesError(err instanceof Error ? err.message : 'Failed to load companies');
     } finally {
@@ -240,28 +240,40 @@ export default function HomePage() {
   return (
     <div className="relative">
       {/* ==================== HERO SECTION ==================== */}
-      <section className="relative h-screen flex items-center justify-center overflow-hidden">
+      <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
         <div className="absolute inset-0 z-0">
           <ThreeBackground />
         </div>
 
-        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-bg/20 to-bg z-[1]" />
+        <div className="absolute inset-0 bg-gradient-to-b from-bg/30 via-transparent to-bg z-[1]" />
 
-        <div className="relative z-10 container mx-auto px-4 flex flex-col items-center text-center max-w-5xl">
+        <div className="relative z-10 container mx-auto px-4 flex flex-col items-center text-center max-w-5xl py-32">
+          <motion.div
+            className="mb-6 inline-flex items-center gap-2 px-4 py-2 rounded-full border border-primary/30 bg-primary/5 text-primary-light text-sm font-medium"
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.2 }}
+          >
+            <span className="w-2 h-2 rounded-full bg-primary animate-pulse" />
+            70,000+ Web3 Jobs Worldwide
+          </motion.div>
+
           <motion.h1
-            className="font-heading text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold leading-tight"
+            className="font-heading text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold leading-tight tracking-tight"
             initial={{ opacity: 0, y: -30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, ease: 'easeOut' }}
           >
-            {t('home.hero.title')}{' '}
-            <span className="text-primary glow-text block sm:inline">
+            <span className="text-text-bright block">
+              {t('home.hero.title')}
+            </span>
+            <span className="text-primary glow-text block mt-2 sm:mt-3">
               {t('home.hero.titleHighlight')}
             </span>
           </motion.h1>
 
           <motion.p
-            className="mt-6 text-text-muted text-base sm:text-lg max-w-2xl leading-relaxed"
+            className="mt-6 text-text-muted text-base sm:text-lg max-w-2xl leading-relaxed font-body"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.2, ease: 'easeOut' }}
@@ -270,7 +282,7 @@ export default function HomePage() {
           </motion.p>
 
           <motion.div
-            className="mt-10 w-full max-w-2xl"
+            className="mt-10 w-full max-w-3xl"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.4, ease: 'easeOut' }}
@@ -279,7 +291,7 @@ export default function HomePage() {
           </motion.div>
 
           <motion.div
-            className="mt-12 w-full"
+            className="mt-16 w-full"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.6, ease: 'easeOut' }}
@@ -287,13 +299,17 @@ export default function HomePage() {
             <StatsCounter />
           </motion.div>
         </div>
+
+        <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-bg to-transparent z-[1] pointer-events-none" />
       </section>
 
+      <hr className="futuristic-divider" />
+
       {/* ==================== CATEGORIES SECTION ==================== */}
-      <section className="py-20 lg:py-28">
-        <div className="container mx-auto px-4">
+      <section className="py-20 lg:py-28 bg-gradient-to-b from-bg via-bg to-bg-card/20">
+        <div className="container mx-auto px-4 max-w-7xl">
           <motion.h2
-            className="font-heading text-2xl sm:text-3xl lg:text-4xl font-bold text-center"
+            className="font-heading text-2xl sm:text-3xl lg:text-4xl font-bold text-center mb-4"
             variants={fadeInUp}
             initial="hidden"
             whileInView="visible"
@@ -340,8 +356,9 @@ export default function HomePage() {
       </section>
 
       {/* ==================== FEATURED JOBS SECTION ==================== */}
-      <section className="py-20 lg:py-28 bg-bg-card/30">
-        <div className="container mx-auto px-4">
+      <section className="py-20 lg:py-28 relative">
+        <div className="absolute inset-0 bg-gradient-to-b from-bg-card/20 via-bg-card/10 to-transparent pointer-events-none" />
+        <div className="container mx-auto px-4 max-w-7xl relative">
           <motion.div
             className="flex items-center justify-between mb-10"
             variants={fadeInUp}
@@ -397,8 +414,9 @@ export default function HomePage() {
       </section>
 
       {/* ==================== LATEST JOBS SECTION ==================== */}
+      <hr className="futuristic-divider" />
       <section className="py-20 lg:py-28">
-        <div className="container mx-auto px-4">
+        <div className="container mx-auto px-4 max-w-7xl">
           <motion.div
             className="flex items-center gap-3 mb-10"
             variants={fadeInUp}
@@ -458,8 +476,9 @@ export default function HomePage() {
       </section>
 
       {/* ==================== TOP COMPANIES SECTION ==================== */}
-      <section className="py-20 lg:py-28 bg-bg-card/30">
-        <div className="container mx-auto px-4">
+      <section className="py-20 lg:py-28 relative">
+        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-bg-card/10 to-bg-card/20 pointer-events-none" />
+        <div className="container mx-auto px-4 max-w-7xl relative">
           <motion.div
             className="flex items-center justify-between mb-10"
             variants={fadeInUp}
@@ -539,11 +558,12 @@ export default function HomePage() {
       </section>
 
       {/* ==================== CTA SECTION ==================== */}
+      <hr className="futuristic-divider" />
       <section className="relative py-24 lg:py-32 overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-primary via-primary-dark to-bg opacity-90" />
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,var(--color-primary)_0%,transparent_50%)] opacity-30" />
+        <div className="absolute inset-0 bg-gradient-to-br from-primary/30 via-primary-dark/20 to-bg opacity-95" />
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(6,182,212,0.15)_0%,transparent_70%)]" />
 
-        <div className="relative z-10 container mx-auto px-4 text-center">
+        <div className="relative z-10 container mx-auto px-4 text-center max-w-7xl">
           <motion.h2
             className="font-heading text-3xl sm:text-4xl lg:text-5xl font-bold text-white"
             variants={fadeInUp}
