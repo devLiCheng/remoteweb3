@@ -1,0 +1,10 @@
+node_modules/
+dist/
+.env
+*.log
+.DS_Store
+.cache/
+.temp/
+.playwright-mcp/
+*.tsbuildinfo
+__pycache__/

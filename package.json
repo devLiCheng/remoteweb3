@@ -1,0 +1,16 @@
+{
+  "name": "remoteweb3",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Web3 Remote Jobs Platform - Find the best Web3, blockchain, and crypto remote jobs",
+  "scripts": {
+    "dev": "concurrently \"cd backend && bun run dev\" \"cd frontend && bun run dev\"",
+    "dev:backend": "cd backend && bun run dev",
+    "dev:frontend": "cd frontend && bun run dev",
+    "build": "cd frontend && bun run build",
+    "db:init": "cd backend && bun run db:init",
+    "deploy": "bash deploy/deploy.sh"
+  },
+  "keywords": ["web3", "jobs", "blockchain", "crypto", "remote", "recruitment"],
+  "license": "MIT"
+}
