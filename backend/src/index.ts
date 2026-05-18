@@ -13,7 +13,7 @@ import { adminRouter } from './routes/admin';
 const app = new Hono();
 
 app.use('*', cors({
-  origin: ['http://localhost:5173', 'https://remoteweb3.com', 'https://www.remoteweb3.com'],
+  origin: ['http://localhost:5173', 'http://localhost:5174', 'https://remoteweb3.com', 'https://www.remoteweb3.com', 'https://admin.remoteweb3.com'],
   allowMethods: ['GET', 'POST', 'OPTIONS'],
   allowHeaders: ['Content-Type', 'Accept-Language'],
   maxAge: 86400,
