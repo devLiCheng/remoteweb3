@@ -1,5 +1,5 @@
 // ============================================================
-// RemoteWeb3 Spider - CryptoJobsList Scraper
+// RemoteWeb3 Spider - HashtagWeb3 Scraper
 // ============================================================
 import * as cheerio from 'cheerio';
 import { BaseScraper } from './base';
@@ -9,12 +9,12 @@ import { upsertCompany, createJob, upsertTag, checkJobExists } from '../api';
 const MAX_PAGES = 15;
 const MAX_JOBS_PER_RUN = 300;
 
-export class CryptoJobsListScraper extends BaseScraper {
+export class HashtagWeb3Scraper extends BaseScraper {
   constructor() {
     super({
-      name: 'cryptojobslist.com',
-      baseUrl: 'https://cryptojobslist.com',
-      jobListUrl: 'https://cryptojobslist.com/jobs',
+      name: 'hashtagweb3.com',
+      baseUrl: 'https://hashtagweb3.com',
+      jobListUrl: 'https://hashtagweb3.com/jobs',
     });
   }
 
@@ -44,21 +44,40 @@ export class CryptoJobsListScraper extends BaseScraper {
       for (let page = 1; page <= MAX_PAGES; page++) {
         if (totalProcessed >= MAX_JOBS_PER_RUN) break;
 
-        const url = `${this.config.jobListUrl}?page=${page}`;
+        const url = page === 1
+          ? this.config.jobListUrl
+          : `${this.config.jobListUrl}?page=${page}`;
         console.log(`  Page ${page}: ${url}`);
 
         let html: string;
         try {
           html = await this.fetchHTML(url);
         } catch {
-          console.log(`  [DONE] No more pages (stopped at page ${page})`);
+          if (page === 1) {
+            result.errors.push('Failed to fetch first page');
+            console.log(`  [FAIL] Could not fetch ${url}`);
+          } else {
+            console.log(`  [DONE] No more pages (stopped at page ${page})`);
+          }
           break;
         }
 
         const $ = this.parseHTML(html);
         const cards = $(
-          'a[href*="/job/"], .job-card, .job-listing, .job-item, article.job, [class*="job-card"], [class*="JobCard"]'
+          'a[href*="/job/"], a[href*="/jobs/"], .job-card, .job-listing, .job-item, article.job, [class*="job-card"], [class*="job-listing"], [class*="JobCard"], .listing-item'
         ).toArray();
+
+        if (cards.length === 0 && page === 1) {
+          console.log(`  [WARN] No job cards found, trying alternative selectors...`);
+          const altCards = $(
+            'a[href*="/position/"], a[href*="/career/"], .card, .listing, [class*="card"], [class*="listing"]'
+          ).toArray();
+          if (altCards.length === 0) {
+            console.log(`  [DONE] Could not find job listings`);
+            break;
+          }
+          cards.push(...altCards);
+        }
 
         if (cards.length === 0) {
           console.log(`  [DONE] No job cards on page ${page}`);
@@ -75,21 +94,21 @@ export class CryptoJobsListScraper extends BaseScraper {
           try {
             const isAnchor = (el as any).tagName?.toLowerCase() === 'a';
             const titleEl = isAnchor
-              ? card.find('h2, h3, .job-title, .title, [class*="title"]').first()
-              : card.find('h2, h3, .job-title, .title, [class*="title"]').first();
+              ? card.find('h2, h3, h4, .title, .job-title, [class*="title"]').first()
+              : card.find('h2, h3, h4, .title, .job-title, [class*="title"]').first();
             const title = titleEl.text().trim();
             if (!title || title.length < 3) continue;
 
             const href = isAnchor
               ? card.attr('href') || ''
-              : card.find('a[href*="/job/"], a[href*="/jobs/"]').first().attr('href') || '';
+              : card.find('a[href*="/job/"], a[href*="/jobs/"], a[href*="/position/"]').first().attr('href') || '';
             const sourceUrl = href.startsWith('http') ? href : `${this.config.baseUrl}${href}`;
-            const sourceId = href.replace(/^\//, '').split('?')[0] || title.toLowerCase().replace(/\s+/g, '-').slice(0, 80);
+            const sourceId = (href || title).replace(/[^a-zA-Z0-9]/g, '-').slice(0, 80);
 
             if (seen.has(sourceId)) continue;
             seen.add(sourceId);
 
-            const existing = await checkJobExists(sourceId, 'cryptojobslist.com');
+            const existing = await checkJobExists(sourceId, 'hashtagweb3.com');
             if (existing) {
               console.log(`  [SKIP] Already exists: ${title}`);
               pageProcessed++;
@@ -98,29 +117,22 @@ export class CryptoJobsListScraper extends BaseScraper {
             }
 
             const companyEl = card.find(
-              '.company, .company-name, .employer, [class*="company"], [class*="employer"], .organization'
+              '.company, .company-name, .employer, .organization, [class*="company"], [class*="employer"]'
             ).first();
-            const companyName =
-              companyEl.text().trim() ||
-              card.find('.text-sm, .text-xs, .text-gray-500, .text-gray-400')
-                .first()
-                .text()
-                .trim() ||
-              'Unknown';
+            const companyName = companyEl.text().trim() || 'Unknown';
 
             const locationEl = card.find(
-              '.location, .job-location, [class*="location"]'
+              '.location, .job-location, [class*="location"], .remote-tag'
             ).first();
             const locationText = locationEl.text().trim() || 'Remote';
 
-            const salaryEl = card.find(
-              '.salary, .job-salary, [class*="salary"], [class*="compensation"], [class*="pay"]'
+            const typeEl = card.find(
+              '.type, .job-type, .employment-type, [class*="type"], .work-type'
             ).first();
-            const salaryText = salaryEl.text().trim() || '';
-            const salary = this.parseSalary(salaryText);
+            const typeText = typeEl.text().trim() || '';
 
             const tagEls = card.find(
-              '.tag, .badge, .category, .skill, [class*="tag"], [class*="skill"], [class*="category"]'
+              '.tag, .badge, .category, .skill, [class*="tag"], [class*="category"], [class*="skill"]'
             );
             const tags: string[] = [];
             tagEls.each((_, t) => {
@@ -128,15 +140,9 @@ export class CryptoJobsListScraper extends BaseScraper {
               if (text && text.length < 40) tags.push(text);
             });
 
-            const postedEl = card.find(
-              '.date, .posted, .time, time, [class*="date"], [class*="time"], [class*="posted"]'
-            ).first();
-            const postedDate = postedEl.text().trim() || '';
-
-            const descEl = card.find('.description, .job-description, .excerpt, p, .summary').first();
+            const descEl = card.find('.description, .excerpt, .summary, p').first();
             const description = descEl.text().trim() || `${title} at ${companyName}`;
 
-            const allText = `${title} ${description} ${tags.join(' ')}`;
             const allTags = [...new Set([...tags, ...this.extractTags(title, description)])];
 
             const job: ScrapedJob = {
@@ -144,25 +150,20 @@ export class CryptoJobsListScraper extends BaseScraper {
               company_name: companyName,
               location: locationText,
               is_remote: locationText.toLowerCase().includes('remote'),
-              salary_min: salary.min,
-              salary_max: salary.max,
-              salary_currency: salary.currency || 'USD',
-              salary_period: 'year',
               description,
-              job_type: this.mapJobType(allText),
+              job_type: this.mapJobType(`${typeText} ${title}`),
               experience_level: this.mapExperienceLevel(title),
               application_url: sourceUrl,
-              source_site: 'cryptojobslist.com',
+              source_site: 'hashtagweb3.com',
               source_url: sourceUrl,
               source_id: sourceId,
-              posted_date: postedDate || undefined,
               tags: allTags,
               categories: this.extractCategories(description, allTags),
             };
 
             const companyId = await upsertCompany({
               name: companyName,
-              source_site: 'cryptojobslist.com',
+              source_site: 'hashtagweb3.com',
             });
             if (companyId !== null) result.companiesInserted++;
 
@@ -193,6 +194,7 @@ export class CryptoJobsListScraper extends BaseScraper {
         console.log(`  Page ${page}: ${pageProcessed} processed, total ${totalProcessed}`);
 
         if (totalProcessed >= MAX_JOBS_PER_RUN) break;
+        if (pageProcessed === 0) break;
         await this.sleep(500);
       }
 

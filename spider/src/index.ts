@@ -12,6 +12,11 @@ import { BraintrustScraper } from './scrapers/braintrust';
 import { LaborXScraper } from './scrapers/laborx';
 import { BeInCryptoScraper } from './scrapers/beincrypto';
 import { FindWeb3Scraper } from './scrapers/findweb3';
+import { HashtagWeb3Scraper } from './scrapers/hashtagweb3';
+import { W3JobsScraper } from './scrapers/w3jobs';
+import { DeJobScraper } from './scrapers/dejob';
+import { EthereumJobsScraper } from './scrapers/ethereumjobs';
+import { SolanaJobsScraper } from './scrapers/solanajobs';
 
 const scrapers = [
   new Web3CareerScraper(),
@@ -24,6 +29,11 @@ const scrapers = [
   new LaborXScraper(),
   new BeInCryptoScraper(),
   new FindWeb3Scraper(),
+  new HashtagWeb3Scraper(),
+  new W3JobsScraper(),
+  new DeJobScraper(),
+  new EthereumJobsScraper(),
+  new SolanaJobsScraper(),
 ];
 
 async function runScraper(scraper: any, index: number, total: number): Promise<ScrapeResult> {

@@ -1,5 +1,5 @@
 // ============================================================
-// RemoteWeb3 Spider - CryptoJobsList Scraper
+// RemoteWeb3 Spider - DeJob (Chinese Web3 Jobs) Scraper
 // ============================================================
 import * as cheerio from 'cheerio';
 import { BaseScraper } from './base';
@@ -7,14 +7,14 @@ import type { ScrapedJob, ScrapeResult } from '../types';
 import { upsertCompany, createJob, upsertTag, checkJobExists } from '../api';
 
 const MAX_PAGES = 15;
-const MAX_JOBS_PER_RUN = 300;
+const MAX_JOBS_PER_RUN = 200;
 
-export class CryptoJobsListScraper extends BaseScraper {
+export class DeJobScraper extends BaseScraper {
   constructor() {
     super({
-      name: 'cryptojobslist.com',
-      baseUrl: 'https://cryptojobslist.com',
-      jobListUrl: 'https://cryptojobslist.com/jobs',
+      name: 'dejob.top',
+      baseUrl: 'https://www.dejob.top',
+      jobListUrl: 'https://www.dejob.top',
     });
   }
 
@@ -44,20 +44,26 @@ export class CryptoJobsListScraper extends BaseScraper {
       for (let page = 1; page <= MAX_PAGES; page++) {
         if (totalProcessed >= MAX_JOBS_PER_RUN) break;
 
-        const url = `${this.config.jobListUrl}?page=${page}`;
+        const url = page === 1
+          ? this.config.jobListUrl
+          : `${this.config.jobListUrl}/page/${page}`;
         console.log(`  Page ${page}: ${url}`);
 
         let html: string;
         try {
           html = await this.fetchHTML(url);
         } catch {
-          console.log(`  [DONE] No more pages (stopped at page ${page})`);
+          if (page === 1) {
+            result.errors.push('Failed to fetch first page');
+          } else {
+            console.log(`  [DONE] No more pages (stopped at page ${page})`);
+          }
           break;
         }
 
         const $ = this.parseHTML(html);
         const cards = $(
-          'a[href*="/job/"], .job-card, .job-listing, .job-item, article.job, [class*="job-card"], [class*="JobCard"]'
+          'article, .post, .job-item, .job-card, .job-listing, .entry, .item, a[href*="/job/"], a[href*="/jobs/"], [class*="post"], [class*="article"], [class*="job"]'
         ).toArray();
 
         if (cards.length === 0) {
@@ -75,21 +81,21 @@ export class CryptoJobsListScraper extends BaseScraper {
           try {
             const isAnchor = (el as any).tagName?.toLowerCase() === 'a';
             const titleEl = isAnchor
-              ? card.find('h2, h3, .job-title, .title, [class*="title"]').first()
-              : card.find('h2, h3, .job-title, .title, [class*="title"]').first();
+              ? card.find('h1, h2, h3, h4, .title, .entry-title, .post-title, [class*="title"]').first()
+              : card.find('h1, h2, h3, h4, .title, .entry-title, .post-title, [class*="title"]').first();
             const title = titleEl.text().trim();
-            if (!title || title.length < 3) continue;
+            if (!title || title.length < 2) continue;
 
             const href = isAnchor
               ? card.attr('href') || ''
-              : card.find('a[href*="/job/"], a[href*="/jobs/"]').first().attr('href') || '';
+              : card.find('a').first().attr('href') || '';
             const sourceUrl = href.startsWith('http') ? href : `${this.config.baseUrl}${href}`;
-            const sourceId = href.replace(/^\//, '').split('?')[0] || title.toLowerCase().replace(/\s+/g, '-').slice(0, 80);
+            const sourceId = (href || title).replace(/[^a-zA-Z0-9\u4e00-\u9fff]/g, '-').slice(0, 80);
 
             if (seen.has(sourceId)) continue;
             seen.add(sourceId);
 
-            const existing = await checkJobExists(sourceId, 'cryptojobslist.com');
+            const existing = await checkJobExists(sourceId, 'dejob.top');
             if (existing) {
               console.log(`  [SKIP] Already exists: ${title}`);
               pageProcessed++;
@@ -98,29 +104,23 @@ export class CryptoJobsListScraper extends BaseScraper {
             }
 
             const companyEl = card.find(
-              '.company, .company-name, .employer, [class*="company"], [class*="employer"], .organization'
+              '.company, .company-name, .employer, .organization, [class*="company"], [class*="employer"], .meta-company'
             ).first();
-            const companyName =
-              companyEl.text().trim() ||
-              card.find('.text-sm, .text-xs, .text-gray-500, .text-gray-400')
-                .first()
-                .text()
-                .trim() ||
-              'Unknown';
+            const companyName = companyEl.text().trim() || 'Unknown';
 
             const locationEl = card.find(
-              '.location, .job-location, [class*="location"]'
+              '.location, .job-location, [class*="location"], .meta-location, .city'
             ).first();
             const locationText = locationEl.text().trim() || 'Remote';
 
             const salaryEl = card.find(
-              '.salary, .job-salary, [class*="salary"], [class*="compensation"], [class*="pay"]'
+              '.salary, .job-salary, [class*="salary"], [class*="compensation"], [class*="pay"], .meta-salary'
             ).first();
             const salaryText = salaryEl.text().trim() || '';
             const salary = this.parseSalary(salaryText);
 
             const tagEls = card.find(
-              '.tag, .badge, .category, .skill, [class*="tag"], [class*="skill"], [class*="category"]'
+              '.tag, .badge, .category, .skill, [class*="tag"], [class*="category"], [class*="skill"], .cat-links a'
             );
             const tags: string[] = [];
             tagEls.each((_, t) => {
@@ -128,31 +128,30 @@ export class CryptoJobsListScraper extends BaseScraper {
               if (text && text.length < 40) tags.push(text);
             });
 
-            const postedEl = card.find(
-              '.date, .posted, .time, time, [class*="date"], [class*="time"], [class*="posted"]'
+            const dateEl = card.find(
+              'time, .date, .posted-date, .entry-date, [class*="date"], [class*="time"], .meta-date'
             ).first();
-            const postedDate = postedEl.text().trim() || '';
+            const postedDate = dateEl.attr('datetime') || dateEl.text().trim() || '';
 
-            const descEl = card.find('.description, .job-description, .excerpt, p, .summary').first();
+            const descEl = card.find('.description, .excerpt, .summary, .entry-content, p').first();
             const description = descEl.text().trim() || `${title} at ${companyName}`;
 
-            const allText = `${title} ${description} ${tags.join(' ')}`;
             const allTags = [...new Set([...tags, ...this.extractTags(title, description)])];
 
             const job: ScrapedJob = {
               title,
               company_name: companyName,
               location: locationText,
-              is_remote: locationText.toLowerCase().includes('remote'),
+              is_remote: locationText.toLowerCase().includes('remote') || locationText.toLowerCase().includes('远程'),
               salary_min: salary.min,
               salary_max: salary.max,
               salary_currency: salary.currency || 'USD',
               salary_period: 'year',
               description,
-              job_type: this.mapJobType(allText),
+              job_type: this.mapJobType(`${title} ${description}`),
               experience_level: this.mapExperienceLevel(title),
               application_url: sourceUrl,
-              source_site: 'cryptojobslist.com',
+              source_site: 'dejob.top',
               source_url: sourceUrl,
               source_id: sourceId,
               posted_date: postedDate || undefined,
@@ -162,7 +161,7 @@ export class CryptoJobsListScraper extends BaseScraper {
 
             const companyId = await upsertCompany({
               name: companyName,
-              source_site: 'cryptojobslist.com',
+              source_site: 'dejob.top',
             });
             if (companyId !== null) result.companiesInserted++;
 
@@ -193,6 +192,7 @@ export class CryptoJobsListScraper extends BaseScraper {
         console.log(`  Page ${page}: ${pageProcessed} processed, total ${totalProcessed}`);
 
         if (totalProcessed >= MAX_JOBS_PER_RUN) break;
+        if (pageProcessed === 0) break;
         await this.sleep(500);
       }
 
