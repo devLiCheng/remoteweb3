@@ -1,9 +1,6 @@
 -- RemoteWeb3 - Database Initialization Script
 -- MySQL 8.0+
--- Database: remoteweb3
-
-CREATE DATABASE IF NOT EXISTS remoteweb3 CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-USE remoteweb3;
+-- Note: Database is auto-created by MYSQL_DATABASE env var in Docker
 
 -- ============================================================
 -- Companies table
@@ -14,6 +11,10 @@ CREATE TABLE IF NOT EXISTS companies (
   slug VARCHAR(255) NOT NULL UNIQUE,
   logo_url VARCHAR(500) DEFAULT NULL,
   website VARCHAR(500) DEFAULT NULL,
+  twitter_url VARCHAR(500) DEFAULT NULL,
+  linkedin_url VARCHAR(500) DEFAULT NULL,
+  github_url VARCHAR(500) DEFAULT NULL,
+  discord_url VARCHAR(500) DEFAULT NULL,
   description TEXT,
   industry VARCHAR(100) DEFAULT NULL,
   company_size VARCHAR(50) DEFAULT NULL,
@@ -51,6 +52,8 @@ CREATE TABLE IF NOT EXISTS jobs (
   benefits TEXT,
   job_type ENUM('full-time','part-time','contract','internship','freelance') DEFAULT 'full-time',
   experience_level ENUM('entry','mid','senior','lead','executive') DEFAULT NULL,
+  department VARCHAR(200) DEFAULT NULL,
+  visa_sponsorship TINYINT(1) DEFAULT 0,
   application_url VARCHAR(1000) DEFAULT NULL,
   source_site VARCHAR(100) NOT NULL,
   source_url VARCHAR(1000) DEFAULT NULL,
@@ -122,7 +125,7 @@ CREATE TABLE IF NOT EXISTS job_categories (
 ) ENGINE=InnoDB;
 
 -- ============================================================
--- Users table (for future auth)
+-- Users table
 -- ============================================================
 CREATE TABLE IF NOT EXISTS users (
   id INT AUTO_INCREMENT PRIMARY KEY,
@@ -141,7 +144,7 @@ CREATE TABLE IF NOT EXISTS users (
 ) ENGINE=InnoDB;
 
 -- ============================================================
--- Saved jobs (bookmarks)
+-- Saved jobs
 -- ============================================================
 CREATE TABLE IF NOT EXISTS saved_jobs (
   user_id INT NOT NULL,
@@ -153,7 +156,7 @@ CREATE TABLE IF NOT EXISTS saved_jobs (
 ) ENGINE=InnoDB;
 
 -- ============================================================
--- Job applications tracking
+-- Applications tracking
 -- ============================================================
 CREATE TABLE IF NOT EXISTS applications (
   id INT AUTO_INCREMENT PRIMARY KEY,
@@ -170,7 +173,7 @@ CREATE TABLE IF NOT EXISTS applications (
 ) ENGINE=InnoDB;
 
 -- ============================================================
--- SEO metadata table
+-- SEO metadata
 -- ============================================================
 CREATE TABLE IF NOT EXISTS seo_meta (
   id INT AUTO_INCREMENT PRIMARY KEY,
@@ -188,9 +191,9 @@ CREATE TABLE IF NOT EXISTS seo_meta (
 ) ENGINE=InnoDB;
 
 -- ============================================================
--- Insert default categories
+-- Default categories
 -- ============================================================
-INSERT INTO categories (name, slug, icon, sort_order) VALUES
+INSERT IGNORE INTO categories (name, slug, icon, sort_order) VALUES
 ('Engineering', 'engineering', 'code', 1),
 ('Design', 'design', 'palette', 2),
 ('Marketing', 'marketing', 'megaphone', 3),
@@ -207,9 +210,9 @@ INSERT INTO categories (name, slug, icon, sort_order) VALUES
 ('Sales', 'sales', 'target', 14);
 
 -- ============================================================
--- Insert common Web3 tags
+-- Default tags
 -- ============================================================
-INSERT INTO tags (name, slug, type) VALUES
+INSERT IGNORE INTO tags (name, slug, type) VALUES
 ('Solidity', 'solidity', 'skill'),
 ('Rust', 'rust', 'skill'),
 ('Go', 'go', 'skill'),
