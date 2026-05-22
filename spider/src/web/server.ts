@@ -1,5 +1,4 @@
 import { Hono } from 'hono';
-import { serveStatic } from 'hono/bun';
 import type { ScrapeResult } from '../types';
 import { Web3CareerScraper } from '../scrapers/web3career';
 import { CryptoJobsListScraper } from '../scrapers/cryptojobslist';
@@ -16,6 +15,8 @@ import { W3JobsScraper } from '../scrapers/w3jobs';
 import { DeJobScraper } from '../scrapers/dejob';
 import { EthereumJobsScraper } from '../scrapers/ethereumjobs';
 import { SolanaJobsScraper } from '../scrapers/solanajobs';
+import { readFileSync } from 'fs';
+import { join } from 'path';
 
 const scrapers = [
   { instance: new Web3CareerScraper(), key: 'web3career' },
@@ -38,8 +39,17 @@ const scrapers = [
 type RunStatus = 'idle' | 'running' | 'done' | 'error';
 const runningStatus: Map<string, { status: RunStatus; result?: ScrapeResult; error?: string; log: string[] }> = new Map();
 
+function dashboardHTML() {
+  try {
+    return readFileSync(join(import.meta.dir, 'dashboard.html'), 'utf-8');
+  } catch {
+    return '<h1>Dashboard not found</h1>';
+  }
+}
+
 const app = new Hono();
 
+// --- API Routes ---
 app.get('/api/spider/scrapers', (c) => {
   return c.json(
     scrapers.map((s) => ({
@@ -84,16 +94,14 @@ app.get('/api/spider/status/:key', (c) => {
   return c.json(state || { status: 'idle', log: [] });
 });
 
-app.get('/api/spider/run-all', async (c) => {
+// run-all supports both GET (browser) and POST (dashboard button)
+const runAllHandler = async (c: any) => {
   const results: Record<string, any> = {};
-
   for (const s of scrapers) {
     const current = runningStatus.get(s.key);
     if (current?.status === 'running') continue;
-
     const state = { status: 'running' as RunStatus, log: [] as string[] };
     runningStatus.set(s.key, state);
-
     try {
       const result = await s.instance.scrape();
       state.status = 'done';
@@ -105,12 +113,23 @@ app.get('/api/spider/run-all', async (c) => {
       results[s.key] = { error: err.message };
     }
   }
-
   return c.json(results);
-});
+};
 
-app.get('/', (c) => c.redirect('/dashboard.html'));
-app.get('/*', serveStatic({ root: './src/web' }));
+app.get('/api/spider/run-all', runAllHandler);
+app.post('/api/spider/run-all', runAllHandler);
+
+// --- Static Pages ---
+app.get('/', (c) => c.html(dashboardHTML()));
+app.get('/dashboard.html', (c) => c.html(dashboardHTML()));
+
+// Catch-all: return JSON 404 (never HTML for /api paths)
+app.all('*', (c) => {
+  if (c.req.path.startsWith('/api')) {
+    return c.json({ error: 'Not found' }, 404);
+  }
+  return c.html(dashboardHTML());
+});
 
 export default {
   port: parseInt(process.env.PORT || '3001'),
