@@ -1,14 +1,17 @@
 # ============================================================
-# RemoteWeb3 - Docker Compose for Coolify Deployment
+# RemoteWeb3 - Full Docker Compose for Coolify Deployment
 # ============================================================
-# Coolify Setup:
-#   1. Service -> Docker Compose -> repo
-#   2. Coolify auto-detects 4 services
-#   3. Set domains: frontend=remoteweb3.com, admin=admin.remoteweb3.com
-#   4. Deploy
+# Domains:
+#   remoteweb3.com       -> frontend  (React SPA)
+#   admin.remoteweb3.com -> admin     (Admin panel)
+#   api.remoteweb3.com   -> backend   (API)
+#   spider.remoteweb3.com-> spider-ui (Scraper dashboard)
 # ============================================================
 
 services:
+  # ========================
+  # MySQL Database
+  # ========================
   db:
     image: mysql:8.0
     container_name: remoteweb3-db
@@ -28,11 +31,14 @@ services:
     networks:
       - remoteweb3-network
 
-  backend:
+  # ========================
+  # API Backend (api.remoteweb3.com)
+  # ========================
+  api:
     build:
       context: .
       dockerfile: Dockerfile.backend
-    container_name: remoteweb3-backend
+    container_name: remoteweb3-api
     restart: unless-stopped
     environment:
       NODE_ENV: production
@@ -50,6 +56,9 @@ services:
     networks:
       - remoteweb3-network
 
+  # ========================
+  # Frontend (remoteweb3.com)
+  # ========================
   frontend:
     build:
       context: .
@@ -59,10 +68,13 @@ services:
     expose:
       - "80"
     depends_on:
-      - backend
+      - api
     networks:
       - remoteweb3-network
 
+  # ========================
+  # Admin Panel (admin.remoteweb3.com)
+  # ========================
   admin:
     build:
       context: .
@@ -72,7 +84,23 @@ services:
     expose:
       - "80"
     depends_on:
-      - backend
+      - api
+    networks:
+      - remoteweb3-network
+
+  # ========================
+  # Spider Dashboard (spider.remoteweb3.com)
+  # ========================
+  spider-ui:
+    build:
+      context: .
+      dockerfile: Dockerfile.spider
+    container_name: remoteweb3-spider
+    restart: unless-stopped
+    expose:
+      - "3001"
+    depends_on:
+      - api
     networks:
       - remoteweb3-network
 

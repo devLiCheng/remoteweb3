@@ -6,10 +6,12 @@
     "scrape": "bun run src/index.ts",
     "scrape:web3career": "bun run src/index.ts --site web3career",
     "scrape:cryptojobslist": "bun run src/index.ts --site cryptojobslist",
-    "scrape:all": "bun run src/index.ts --all"
+    "scrape:all": "bun run src/index.ts --all",
+    "web": "bun run src/web/server.ts"
   },
   "dependencies": {
-    "cheerio": "^1.0.0"
+    "cheerio": "^1.0.0",
+    "hono": "^4.12.21"
   },
   "devDependencies": {
     "@types/bun": "latest",

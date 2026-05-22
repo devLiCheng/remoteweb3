@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>RemoteWeb3 Spider Dashboard</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      background: #0A0A14;
+      color: #E2E8F0;
+      min-height: 100vh;
+    }
+    header {
+      background: linear-gradient(135deg, #0A1628, #111827);
+      border-bottom: 1px solid #1E293B;
+      padding: 16px 32px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    header h1 {
+      font-size: 20px;
+      font-weight: 700;
+      color: #06B6D4;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    header h1 span {
+      color: #64748B;
+      font-size: 14px;
+      font-weight: 400;
+    }
+    .btn {
+      padding: 10px 20px;
+      border-radius: 8px;
+      border: none;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 600;
+      transition: all 0.2s;
+    }
+    .btn-primary { background: #06B6D4; color: #0A0A14; }
+    .btn-primary:hover { background: #0891B2; }
+    .btn-danger { background: #EF4444; color: #fff; }
+    .btn-danger:hover { background: #DC2626; }
+    .btn-secondary { background: #1E293B; color: #94A3B8; border: 1px solid #334155; }
+    .btn-secondary:hover { background: #334155; }
+    .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+    main {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 32px 24px;
+    }
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 16px;
+      margin-bottom: 32px;
+    }
+    .stat-card {
+      background: #111827;
+      border: 1px solid #1E293B;
+      border-radius: 12px;
+      padding: 20px;
+    }
+    .stat-card .label { font-size: 12px; color: #64748B; text-transform: uppercase; letter-spacing: 0.5px; }
+    .stat-card .value { font-size: 28px; font-weight: 700; margin-top: 4px; }
+    .stat-card .value.ok { color: #10B981; }
+    .stat-card .value.warn { color: #F59E0B; }
+    .stat-card .value.info { color: #06B6D4; }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: #111827;
+      border: 1px solid #1E293B;
+      border-radius: 12px;
+      overflow: hidden;
+    }
+    th {
+      text-align: left;
+      padding: 12px 16px;
+      font-size: 12px;
+      font-weight: 600;
+      color: #64748B;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      background: #0A1628;
+      border-bottom: 1px solid #1E293B;
+    }
+    td {
+      padding: 12px 16px;
+      font-size: 14px;
+      border-bottom: 1px solid #1E293B;
+    }
+    tr:last-child td { border-bottom: none; }
+    .status {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 12px;
+      border-radius: 9999px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+    .status.idle { background: #1E293B; color: #64748B; }
+    .status.running { background: rgba(6,182,212,0.15); color: #06B6D4; }
+    .status.done { background: rgba(16,185,129,0.15); color: #10B981; }
+    .status.error { background: rgba(239,68,68,0.15); color: #EF4444; }
+    .log-container {
+      background: #0A0A14;
+      border: 1px solid #1E293B;
+      border-radius: 12px;
+      padding: 16px;
+      margin-top: 24px;
+      max-height: 300px;
+      overflow-y: auto;
+      font-family: 'Consolas', 'Menlo', monospace;
+      font-size: 12px;
+      color: #94A3B8;
+      line-height: 1.8;
+      display: none;
+    }
+    .log-container.active { display: block; }
+    .log-line { white-space: pre-wrap; }
+    .log-line.error { color: #EF4444; }
+    .log-line.ok { color: #10B981; }
+    .section-title {
+      font-size: 16px;
+      font-weight: 700;
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+    .pulse { animation: pulse 1.5s ease-in-out infinite; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>
+      🕷 RemoteWeb3 Spider
+      <span>Web3 Job Scraper Control Panel</span>
+    </h1>
+    <div style="display:flex;gap:8px;">
+      <button class="btn btn-primary" onclick="runAll()">Run All Scrapers</button>
+      <button class="btn btn-secondary" onclick="window.open('https://remoteweb3.com','_blank')">View Website</button>
+    </div>
+  </header>
+
+  <main>
+    <div class="stats-grid" id="statsGrid"></div>
+    <div class="section-title">Scrapers</div>
+    <table>
+      <thead>
+        <tr>
+          <th>Site</th>
+          <th>URL</th>
+          <th>Status</th>
+          <th>Last Result</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody id="scraperList"></tbody>
+    </table>
+    <div class="log-container" id="logContainer">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+        <strong style="color:#E2E8F0;" id="logTitle">Logs</strong>
+        <button class="btn btn-secondary" style="padding:4px 12px;font-size:12px;" onclick="clearLogs()">Clear</button>
+      </div>
+      <div id="logContent"></div>
+    </div>
+  </main>
+
+  <script>
+    let statusPoll;
+
+    async function loadScrapers() {
+      const res = await fetch('/api/spider/scrapers');
+      const scrapers = await res.json();
+      const running = scrapers.filter(s => s.status === 'running').length;
+      const done = scrapers.filter(s => s.status === 'done').length;
+      const error = scrapers.filter(s => s.status === 'error').length;
+      const idle = scrapers.filter(s => s.status === 'idle').length;
+
+      document.getElementById('statsGrid').innerHTML = `
+        <div class="stat-card"><div class="label">Total Scrapers</div><div class="value info">${scrapers.length}</div></div>
+        <div class="stat-card"><div class="label">Running</div><div class="value ${running > 0 ? 'warn pulse' : ''}">${running}</div></div>
+        <div class="stat-card"><div class="label">Completed</div><div class="value ok">${done}</div></div>
+        <div class="stat-card"><div class="label">Errors</div><div class="value ${error > 0 ? 'warn' : ''}">${error}</div></div>
+      `;
+
+      document.getElementById('scraperList').innerHTML = scrapers.map(s => `
+        <tr>
+          <td><strong>${s.name}</strong></td>
+          <td style="color:#64748B;font-size:13px;">${s.baseUrl}</td>
+          <td><span class="status ${s.status}">${s.status}</span></td>
+          <td style="color:#64748B;font-size:13px;" id="result-${s.key}">-</td>
+          <td>
+            <button class="btn btn-primary" style="padding:6px 14px;font-size:12px;" onclick="runScraper('${s.key}')" ${s.status === 'running' ? 'disabled' : ''}>
+              ${s.status === 'running' ? 'Running...' : 'Run'}
+            </button>
+          </td>
+        </tr>
+      `).join('');
+    }
+
+    async function runScraper(key) {
+      appendLog(`[RUN] Starting scraper: ${key}`);
+      document.getElementById('logContainer').classList.add('active');
+      try {
+        const res = await fetch('/api/spider/run/' + key, { method: 'POST' });
+        const data = await res.json();
+        if (data.error) {
+          appendLog(`[ERROR] ${key}: ${data.error}`, 'error');
+        } else if (data.status === 'done' && data.result) {
+          appendLog(`[OK] ${key}: ${data.result.jobsScraped} scraped, ${data.result.jobsInserted} inserted, ${data.result.companiesInserted} companies`, 'ok');
+          document.getElementById('result-' + key).textContent = `${data.result.jobsInserted} jobs`;
+        } else if (data.status === 'error') {
+          appendLog(`[ERROR] ${key}: ${data.error}`, 'error');
+        }
+      } catch (e) {
+        appendLog(`[ERROR] ${key}: ${e.message}`, 'error');
+      }
+      loadScrapers();
+    }
+
+    async function runAll() {
+      appendLog(`[RUN] Starting ALL scrapers...`);
+      document.getElementById('logContainer').classList.add('active');
+      try {
+        const res = await fetch('/api/spider/run-all', { method: 'POST' });
+        const data = await res.json();
+        for (const [key, result] of Object.entries(data)) {
+          if (result.error) {
+            appendLog(`[ERROR] ${key}: ${result.error}`, 'error');
+          } else {
+            appendLog(`[OK] ${key}: ${result.jobs} scraped, ${result.inserted} inserted`, 'ok');
+          }
+        }
+        appendLog(`[DONE] All scrapers completed`);
+      } catch (e) {
+        appendLog(`[ERROR] ${e.message}`, 'error');
+      }
+      loadScrapers();
+    }
+
+    function appendLog(msg, cls) {
+      const el = document.getElementById('logContent');
+      const div = document.createElement('div');
+      div.className = 'log-line' + (cls ? ' ' + cls : '');
+      div.textContent = new Date().toLocaleTimeString() + ' ' + msg;
+      el.appendChild(div);
+      const container = document.getElementById('logContainer');
+      container.scrollTop = container.scrollHeight;
+    }
+
+    function clearLogs() {
+      document.getElementById('logContent').innerHTML = '';
+    }
+
+    loadScrapers();
+    statusPoll = setInterval(loadScrapers, 5000);
+  </script>
+</body>
+</html>
