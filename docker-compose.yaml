@@ -1,6 +1,12 @@
 # ============================================================
 # RemoteWeb3 - Docker Compose for Coolify Deployment
 # ============================================================
+# Coolify Setup:
+#   1. Service -> Docker Compose -> repo
+#   2. Coolify auto-detects 4 services
+#   3. Set domains: frontend=remoteweb3.com, admin=admin.remoteweb3.com
+#   4. Deploy
+# ============================================================
 
 services:
   db:
@@ -36,6 +42,8 @@ services:
       DB_USER: root
       DB_PASSWORD: remoteweb3_2026
       DB_NAME: remoteweb3
+    expose:
+      - "3000"
     depends_on:
       db:
         condition: service_started
@@ -48,6 +56,8 @@ services:
       dockerfile: Dockerfile.frontend
     container_name: remoteweb3-frontend
     restart: unless-stopped
+    expose:
+      - "80"
     depends_on:
       - backend
     networks:
@@ -59,6 +69,8 @@ services:
       dockerfile: Dockerfile.admin
     container_name: remoteweb3-admin
     restart: unless-stopped
+    expose:
+      - "80"
     depends_on:
       - backend
     networks:
