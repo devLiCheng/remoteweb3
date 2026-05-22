@@ -1,17 +1,14 @@
 # ============================================================
 # RemoteWeb3 - Full Docker Compose for Coolify Deployment
 # ============================================================
-# Domains:
-#   remoteweb3.com       -> frontend  (React SPA)
-#   admin.remoteweb3.com -> admin     (Admin panel)
-#   api.remoteweb3.com   -> backend   (API)
-#   spider.remoteweb3.com-> spider-ui (Scraper dashboard)
+# Coolify domain mapping (set in Coolify UI):
+#   frontend -> remoteweb3.com
+#   admin    -> admin.remoteweb3.com
+#   api      -> api.remoteweb3.com
+#   spider-ui -> spider.remoteweb3.com
 # ============================================================
 
 services:
-  # ========================
-  # MySQL Database
-  # ========================
   db:
     image: mysql:8.0
     container_name: remoteweb3-db
@@ -31,9 +28,6 @@ services:
     networks:
       - remoteweb3-network
 
-  # ========================
-  # API Backend (api.remoteweb3.com)
-  # ========================
   api:
     build:
       context: .
@@ -56,9 +50,6 @@ services:
     networks:
       - remoteweb3-network
 
-  # ========================
-  # Frontend (remoteweb3.com)
-  # ========================
   frontend:
     build:
       context: .
@@ -72,9 +63,6 @@ services:
     networks:
       - remoteweb3-network
 
-  # ========================
-  # Admin Panel (admin.remoteweb3.com)
-  # ========================
   admin:
     build:
       context: .
@@ -88,9 +76,6 @@ services:
     networks:
       - remoteweb3-network
 
-  # ========================
-  # Spider Dashboard (spider.remoteweb3.com)
-  # ========================
   spider-ui:
     build:
       context: .
@@ -99,10 +84,19 @@ services:
     restart: unless-stopped
     expose:
       - "3001"
+    ports:
+      - "3001:3001"
     depends_on:
-      - api
+      api:
+        condition: service_started
     networks:
       - remoteweb3-network
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.services.spider-ui.loadbalancer.server.port=3001"
+      - "traefik.http.routers.spider-ui.rule=Host(`spider.remoteweb3.com`)"
+      - "traefik.http.routers.spider-ui.entrypoints=websecure"
+      - "traefik.http.routers.spider-ui.tls=true"
 
 volumes:
   remoteweb3_mysql:

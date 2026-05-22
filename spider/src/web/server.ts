@@ -49,6 +49,9 @@ function dashboardHTML() {
 
 const app = new Hono();
 
+// --- Health Check ---
+app.get('/health', (c) => c.json({ status: 'ok', uptime: process.uptime() }));
+
 // --- API Routes ---
 app.get('/api/spider/scrapers', (c) => {
   return c.json(
@@ -133,5 +136,6 @@ app.all('*', (c) => {
 
 export default {
   port: parseInt(process.env.PORT || '3001'),
+  hostname: '0.0.0.0',
   fetch: app.fetch,
 };
