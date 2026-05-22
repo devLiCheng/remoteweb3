@@ -1,0 +1,15 @@
+node_modules/
+dist/
+.env
+*.log
+.DS_Store
+.cache/
+.temp/
+.playwright-mcp/
+*.tsbuildinfo
+__pycache__/
+.git/
+.gitignore
+README.md
+deploy/
+*.png

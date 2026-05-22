@@ -14,6 +14,8 @@ DB_NAME="${DB_NAME:-remoteweb3}"
 DB_ADMIN_NAME="${DB_ADMIN_NAME:-remoteweb3Admin}"
 DOMAIN="${DOMAIN:-remoteweb3.com}"
 ADMIN_DOMAIN="${ADMIN_DOMAIN:-admin.remoteweb3.com}"
+SPIDER_DOMAIN="${SPIDER_DOMAIN:-spider.remoteweb3.com}"
+API_DOMAIN="${API_DOMAIN:-api.remoteweb3.com}"
 APP_DIR="/var/www/remoteweb3"
 GITHUB_REPO="https://github.com/devLiCheng/remoteweb3.git"
 CERT_EMAIL="819812520@qq.com"
@@ -168,6 +170,17 @@ bun run build
 echo "  [OK] Admin panel built."
 
 # ============================================================
+# 6c. Spider Dashboard
+# ============================================================
+echo "[6c/8] Building spider dashboard..."
+
+cd ${APP_DIR}/spider
+bun install
+# Spider runs as a Bun server on port 3001
+
+echo "  [OK] Spider dashboard ready."
+
+# ============================================================
 # 7. PM2 Process Manager
 # ============================================================
 echo "[7/8] Setting up PM2..."
@@ -177,14 +190,20 @@ if ! command -v pm2 &> /dev/null; then
 fi
 
 cd ${APP_DIR}/backend
-pm2 delete remoteweb3-backend 2>/dev/null || true
-pm2 start bun --name remoteweb3-backend -- run src/index.ts
+pm2 delete remoteweb3-api 2>/dev/null || true
+pm2 start bun --name remoteweb3-api -- run src/index.ts
 pm2 save
 
 # Setup PM2 to start on boot
 pm2 startup systemd -u $SUDO_USER --hp /home/$SUDO_USER || pm2 startup
 
-echo "  [OK] PM2 configured. Backend running."
+# Start spider dashboard
+cd ${APP_DIR}/spider
+pm2 delete remoteweb3-spider 2>/dev/null || true
+pm2 start bun --name remoteweb3-spider -- run src/web/server.ts
+pm2 save
+
+echo "  [OK] PM2 configured. Backend + Spider running."
 
 # ============================================================
 # 8. Nginx Configuration (HTTP first, then SSL)
@@ -255,9 +274,43 @@ server {
         proxy_set_header Upgrade $http_upgrade;
         proxy_set_header Connection 'upgrade';
         proxy_set_header Host $host;
+	    proxy_set_header X-Real-IP $remote_addr;
+	    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+	    proxy_set_header X-Forwarded-Proto $scheme;
+	}
+}
+
+# Spider HTTP
+server {
+    listen 80;
+    server_name spider.remoteweb3.com;
+
+    location / {
+        proxy_pass http://127.0.0.1:3001;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection 'upgrade';
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    }
+}
+
+# API HTTP
+server {
+    listen 80;
+    server_name api.remoteweb3.com;
+
+    location / {
+        proxy_pass http://127.0.0.1:3000;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection 'upgrade';
+        proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_read_timeout 60s;
     }
 }
 NGINXHTTP
@@ -284,6 +337,20 @@ sudo certbot --nginx \
     --non-interactive --agree-tos \
     --email ${CERT_EMAIL} \
     --redirect 2>/dev/null || echo "  [WARN] SSL for ${ADMIN_DOMAIN} - run manually: sudo certbot --nginx -d ${ADMIN_DOMAIN}"
+
+# Get cert for spider subdomain
+sudo certbot --nginx \
+    -d ${SPIDER_DOMAIN} \
+    --non-interactive --agree-tos \
+    --email ${CERT_EMAIL} \
+    --redirect 2>/dev/null || echo "  [WARN] SSL for ${SPIDER_DOMAIN} - run manually: sudo certbot --nginx -d ${SPIDER_DOMAIN}"
+
+# Get cert for API subdomain
+sudo certbot --nginx \
+    -d ${API_DOMAIN} \
+    --non-interactive --agree-tos \
+    --email ${CERT_EMAIL} \
+    --redirect 2>/dev/null || echo "  [WARN] SSL for ${API_DOMAIN} - run manually: sudo certbot --nginx -d ${API_DOMAIN}"
 
 echo "  [OK] SSL certificates obtained."
 
@@ -411,6 +478,74 @@ server {
     server_name admin.remoteweb3.com;
     return 301 https://$host$request_uri;
 }
+
+# Spider Dashboard - HTTPS
+server {
+    listen 443 ssl http2;
+    server_name spider.remoteweb3.com;
+
+    ssl_certificate /etc/letsencrypt/live/spider.remoteweb3.com/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/spider.remoteweb3.com/privkey.pem;
+    ssl_protocols TLSv1.2 TLSv1.3;
+    ssl_ciphers ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256;
+
+    add_header Strict-Transport-Security "max-age=63072000" always;
+    add_header X-Frame-Options "SAMEORIGIN" always;
+    add_header X-Content-Type-Options "nosniff" always;
+
+    location / {
+        proxy_pass http://127.0.0.1:3001;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection 'upgrade';
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_read_timeout 120s;
+    }
+}
+
+# Spider HTTP -> HTTPS redirect
+server {
+    listen 80;
+    server_name spider.remoteweb3.com;
+    return 301 https://$host$request_uri;
+}
+
+# API - HTTPS
+server {
+    listen 443 ssl http2;
+    server_name api.remoteweb3.com;
+
+    ssl_certificate /etc/letsencrypt/live/api.remoteweb3.com/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/api.remoteweb3.com/privkey.pem;
+    ssl_protocols TLSv1.2 TLSv1.3;
+    ssl_ciphers ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256;
+
+    add_header Strict-Transport-Security "max-age=63072000" always;
+    add_header Access-Control-Allow-Origin "https://remoteweb3.com https://admin.remoteweb3.com https://spider.remoteweb3.com" always;
+    add_header Access-Control-Allow-Methods "GET, POST, PUT, DELETE, OPTIONS" always;
+    add_header Access-Control-Allow-Headers "Content-Type, Authorization" always;
+
+    location / {
+        proxy_pass http://127.0.0.1:3000;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection 'upgrade';
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_read_timeout 60s;
+    }
+}
+
+# API HTTP -> HTTPS redirect
+server {
+    listen 80;
+    server_name api.remoteweb3.com;
+    return 301 https://$host$request_uri;
+}
 NGINXHTTPS
 
 sudo nginx -t && sudo systemctl reload nginx
@@ -426,14 +561,16 @@ echo "  DEPLOYMENT COMPLETE"
 echo "=========================================="
 echo "  Website:  https://${DOMAIN}"
 echo "  Admin:    https://${ADMIN_DOMAIN}"
-echo "  API:      https://${DOMAIN}/api/health"
+echo "  Spider:   https://${SPIDER_DOMAIN}"
+echo "  API:      https://${API_DOMAIN}/health"
 echo ""
 echo "  Status:   pm2 status"
-echo "  Logs:     pm2 logs remoteweb3-backend"
+echo "  Logs:     pm2 logs remoteweb3-api"
 echo ""
 echo "  To update:"
 echo "    cd ${APP_DIR} && git pull"
-echo "    cd backend  && bun install && pm2 restart remoteweb3-backend"
+echo "    cd backend && bun install && pm2 restart remoteweb3-api"
 echo "    cd frontend && bun install && bun run build"
-echo "    cd ../admin  && bun install && bun run build"
+echo "    cd ../admin && bun install && bun run build"
+echo "    cd ../spider && bun install && pm2 restart remoteweb3-spider"
 echo "=========================================="
