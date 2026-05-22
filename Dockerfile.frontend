@@ -1,5 +1,6 @@
 # ============================================================
-# RemoteWeb3 Frontend - Build + Nginx Dockerfile
+# RemoteWeb3 Frontend - Build + Nginx Dockerfile (v2 - api hostname)
+# Cache-bust: 2026-05-22-2
 # ============================================================
 FROM oven/bun:1-alpine AS builder
 WORKDIR /app
